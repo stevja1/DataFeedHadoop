@@ -28,7 +28,7 @@ public class DataFeedGenerator {
 	public static void main(String[] args) {
 		int sum = 0;
 		int timesToIterate = 1;
-		final String outputFilename = "100MM_datafeed_data.txt";
+		final String outputFilename = "1MM_datafeed_data.txt";
 
 		// Open the output file
 		OutputStream outputStream = null;
@@ -42,7 +42,7 @@ public class DataFeedGenerator {
 
 		try {
 			for (int i = 0; i < timesToIterate; ++i) {
-				sum += buildTestHits(outputStream, 100000000, "\t", "\n");
+				sum += buildTestHits(outputStream, 1000000, "\t", "\n");
 			}
 		} catch(IOException e) {
 			System.err.println("There was a problem writing data to the output stream.");

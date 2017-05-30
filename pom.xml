@@ -6,7 +6,10 @@
     <version>1.0-SNAPSHOT</version>
     <name>DataFeedHadoop</name>
     <groupId>com.datafeedtoolbox.examples</groupId>
-    <url>http://maven.apache.org</url>
+    <url>http://datafeedtoolbox.com</url>
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
     <dependencies>
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -40,28 +43,6 @@
     </dependencies>
     <build>
         <plugins>
-				<!--
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-shade-plugin</artifactId>
-                <version>2.3</version>
-                <configuration>
-                    <transformers>
-                        <transformer
-                                implementation="org.apache.maven.plugins.shade.resource.ApacheLicenseResourceTransformer">
-                        </transformer>
-                    </transformers>
-                </configuration>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>shade</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-						-->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -71,6 +52,22 @@
                     <target>1.8</target>
                 </configuration>
             </plugin>
+            <!-- Build an executable JAR
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.0.2</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <addClasspath>true</addClasspath>
+                            <classpathPrefix>lib/</classpathPrefix>
+                            <mainClass>com.datafeedtoolbox.examples.DataFeedGenerator</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
+            -->
         </plugins>
     </build>
 </project>
