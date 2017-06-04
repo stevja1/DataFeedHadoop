@@ -5,7 +5,7 @@ To compile, run `mvn clean package`
 
 Generate some data to test with by using the Data Feed Generator program.
 ```
-$ java -jar target/DataFeedHadoop-1.0-SNAPSHOT.jar com.datafeedtoolbox.examples.DataFeedGenerator
+$ java -cp target/DataFeedHadoop-1.0-SNAPSHOT.jar com.datafeedtoolbox.examples.DataFeedGenerator
 ```
 When it's complete, you'll see something like this:
 ```
