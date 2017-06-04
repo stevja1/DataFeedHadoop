@@ -54,7 +54,7 @@ public class StandardReducer extends Reducer<Text,Text,Text,DoubleWritable> {
 
 		visitorTraffic.sort(this.comparator);
 
-		for(Text hit : visitorTraffic) {
+		for(Text hit : values) {
 			columns = hit.toString().split("\\t", -1);
 			eventList = DataFeedTools.getValue("post_event_list", columns, this.columnHeaders);
 			eventList = String.format(",%s,", eventList);

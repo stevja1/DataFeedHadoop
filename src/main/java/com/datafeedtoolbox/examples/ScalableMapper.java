@@ -24,6 +24,7 @@ public class ScalableMapper extends Mapper<Object, Text, CompositeDataFeedKey, T
 	private static final Logger LOGGER = LoggerFactory.getLogger(ScalableMapper.class);
 	private static final String FIELD_SEPARATOR = "\\t";
 	private static long recordsProcessed = 0;
+	private static long lastStatusUpdate = 0;
 	public enum MapperCounters {
 		CORRUPT_ROW, COLUMN_COUNT, INPUT_COLUMN_COUNT
 	}
@@ -68,10 +69,11 @@ public class ScalableMapper extends Mapper<Object, Text, CompositeDataFeedKey, T
 		this.key.set(String.format("%s:%s", visIdHigh, visIdLow), Integer.valueOf(visitNum), Integer.valueOf(visitPageNum));
 		context.write(this.key, value);
 		++ScalableMapper.recordsProcessed;
-		if(System.currentTimeMillis() % 5000 == 0) {
-//			context.setStatus("Processed "+ScalableMapper.recordsProcessed+" hits per second.");
+		if(System.currentTimeMillis() - lastStatusUpdate > 5000) {
+			context.setStatus("Processed "+ScalableMapper.recordsProcessed+" hits per 5 seconds.");
 			LOGGER.info("Processed "+ScalableMapper.recordsProcessed+" hits per 5 seconds.");
 			ScalableMapper.recordsProcessed = 0;
+			ScalableMapper.lastStatusUpdate = System.currentTimeMillis();
 		}
 
 	}

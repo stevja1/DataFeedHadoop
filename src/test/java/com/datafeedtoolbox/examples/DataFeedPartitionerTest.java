@@ -1,5 +1,6 @@
 package com.datafeedtoolbox.examples;
 
+import com.datafeedtoolbox.examples.secondarysort.CompositeDataFeedKey;
 import com.datafeedtoolbox.examples.secondarysort.DataFeedPartitioner;
 import com.datafeedtoolbox.examples.tools.DataFeedTools;
 import org.apache.hadoop.io.Text;
@@ -17,14 +18,14 @@ public class DataFeedPartitionerTest {
 	@Test
 	public void testPartitioner() {
 		final DataFeedPartitioner partitioner = new DataFeedPartitioner();
-		final List<Text> keys = new ArrayList<>();
+		final List<CompositeDataFeedKey> keys = new ArrayList<>();
 		for(int i = 0; i < 10000; ++i) {
-			keys.add(new Text(DataFeedGenerator.visIdGenerator()+"|1|1"));
+			keys.add(new CompositeDataFeedKey(DataFeedGenerator.visIdGenerator(), 1, 1));
 		}
 		final Text value = new Text("Foo Bar");
 		HashMap<Integer, Integer> counts = new HashMap<>();
 		int partition;
-		for(Text key : keys) {
+		for(CompositeDataFeedKey key : keys) {
 			partition = partitioner.getPartition(key, value, 4);
 			if(counts.containsKey(partition)) {
 				counts.put(partition, counts.get(partition) + 1);

@@ -11,27 +11,20 @@ import org.slf4j.LoggerFactory;
  */
 public class DataFeedComparator extends WritableComparator {
 	private static final Logger LOGGER = LoggerFactory.getLogger(DataFeedComparator.class);
-	private static int comparisons = 0;
 
 	public DataFeedComparator() {
-		super(Text.class, true);
+		super(CompositeDataFeedKey.class, true);
 	}
 
 	@Override
 	public int compare(WritableComparable a, WritableComparable b) {
-		++DataFeedComparator.comparisons;
-		if(System.currentTimeMillis() % 5000 == 0) {
-			DataFeedComparator.LOGGER.info("Made "+DataFeedComparator.comparisons+" comparisons in 5 seconds.");
-			DataFeedComparator.comparisons = 0;
-		}
-
 		CompositeDataFeedKey key1 = (CompositeDataFeedKey)a;
 		CompositeDataFeedKey key2 = (CompositeDataFeedKey)b;
 
 		final int result = key1.getVisId().compareTo(key2.getVisId());
 		if(result == 0) {
-			if(key1.getHitOrder() < key2.getHitOrder()) return -1;
-			else if(key1.getHitOrder() > key2.getHitOrder()) return 1;
+			if(key1.getHitOrder().get() < key2.getHitOrder().get()) return -1;
+			else if(key1.getHitOrder().get() > key2.getHitOrder().get()) return 1;
 			else return 0;
 		} else return result;
 	}

@@ -1,5 +1,6 @@
 package com.datafeedtoolbox.examples;
 
+import com.datafeedtoolbox.examples.secondarysort.CompositeDataFeedKey;
 import com.datafeedtoolbox.examples.tools.DataFeedTools;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
@@ -17,11 +18,11 @@ import java.util.List;
 /**
  * Copyright Jared Stevens 2017 All Rights Reserved
  */
-public class ScalableReducer extends Reducer<Text,Text,Text,DoubleWritable> {
+public class ScalableReducer extends Reducer<CompositeDataFeedKey,Text,Text,DoubleWritable> {
+	private final Text visId = new Text();
 	private final DoubleWritable result = new DoubleWritable();
 	private Configuration conf;
 	private List<String> columnHeaders;
-	private final Text visId = new Text();
 
 	@Override
 	public void setup(Context context) throws IOException, InterruptedException {
@@ -41,7 +42,7 @@ public class ScalableReducer extends Reducer<Text,Text,Text,DoubleWritable> {
 	}
 
 	@Override
-	protected void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
+	protected void reduce(CompositeDataFeedKey key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
 		// The hit data stored in 'values' is already sorted. Yay!
 		String[] columns;
 		String eventList;
@@ -61,7 +62,7 @@ public class ScalableReducer extends Reducer<Text,Text,Text,DoubleWritable> {
 
 		// Let's just grab the visId part of the key before we return it. No need to return the
 		// composite key that was built by the mapper.
-		this.visId.set(key.toString().split("\\|")[0]);
+		this.visId.set(key.getVisId());
 		this.result.set(revenue);
 		context.write(this.visId, this.result);
 	}

@@ -10,15 +10,8 @@ import org.slf4j.LoggerFactory;
  */
 public class DataFeedPartitioner extends Partitioner<CompositeDataFeedKey, Text> {
 	private static final Logger LOGGER = LoggerFactory.getLogger(DataFeedPartitioner.class);
-	private static int partitions = 0;
 	@Override
 	public int getPartition(CompositeDataFeedKey key, Text value, int partitions) {
-		++DataFeedPartitioner.partitions;
-		if(System.currentTimeMillis() % 5000 == 0) {
-			DataFeedPartitioner.LOGGER.info("Processed "+DataFeedPartitioner.partitions+" partitions in 5 seconds.");
-			DataFeedPartitioner.partitions = 0;
-		}
-
 		return (key.getVisId().hashCode() & Integer.MAX_VALUE) % partitions;
 	}
 }
