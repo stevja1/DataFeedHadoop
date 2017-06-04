@@ -17,7 +17,7 @@ To run this code on a Hadoop cluster, you'll need to do the following:
 3. Copy the jar file to the resource mangager on the cluster.
 4. Run the hadoop program using the following command:
 ```
-hadoop jar DataFeedHadoop-1.0-SNAPSHOT.jar com.datafeedtoolbox.examples.DataFeedJob /config/file/location.txt /example/data/feed/data/ /output/directory
+hadoop jar DataFeedHadoop-1.0-SNAPSHOT.jar com.datafeedtoolbox.examples.StandardDataFeedJob /config/file/location.txt /example/data/feed/data/ /output/directory
 ```
 Where the following applies:
 * /config/file/location.txt is the location of the column headers in HDFS

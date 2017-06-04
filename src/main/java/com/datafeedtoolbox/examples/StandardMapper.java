@@ -19,7 +19,8 @@ import java.util.*;
 public class StandardMapper extends Mapper<Object, Text, Text, Text> {
 	private static final Logger LOGGER = LoggerFactory.getLogger(StandardMapper.class);
 	private static final String FIELD_SEPARATOR = "\\t";
-	private static long recordsProcessed;
+	private static long recordsProcessed = 0;
+	private static long lastStatusUpdate = 0;
 	public enum MapperCounters {
 		CORRUPT_ROW, COLUMN_COUNT, INPUT_COLUMN_COUNT
 	}
@@ -57,12 +58,24 @@ public class StandardMapper extends Mapper<Object, Text, Text, Text> {
 		}
 		final String visIdHigh = DataFeedTools.getValue("post_visid_high", columns, this.columnHeaders);
 		final String visIdLow = DataFeedTools.getValue("post_visid_low", columns, this.columnHeaders);
+		/* Uncomment this to sample hits
+		try {
+			if (!StandardMapper.sampleHit(visIdHigh, visIdLow, 0.5)) {
+				return;
+			}
+		} catch(NoSuchAlgorithmException e) {
+			throw new InternalError("Unable to sample data because of missing algorithm.", e);
+		}
+		*/
 		this.key.set(String.format("%s:%s", visIdHigh, visIdLow));
 		context.write(this.key, value);
+		// Update the Hadoop framework every 5 seconds with our status so that Hadoop doesn't think we're hung
 		++StandardMapper.recordsProcessed;
-		if(System.currentTimeMillis() % 1000 == 0) {
-//			context.setStatus("Processed "+StandardMapper.recordsProcessed+" per second.");
-			LOGGER.info("Processed "+StandardMapper.recordsProcessed+" per second.");
+		if(System.currentTimeMillis() - StandardMapper.lastStatusUpdate > 5000) {
+			final int duration = (int)((System.currentTimeMillis() - StandardMapper.lastStatusUpdate) / 1000);
+			StandardMapper.lastStatusUpdate = System.currentTimeMillis();
+			context.setStatus("Processed "+StandardMapper.recordsProcessed+" per "+duration+" seconds.");
+			LOGGER.info("Processed "+StandardMapper.recordsProcessed+" per "+duration+" seconds.");
 			StandardMapper.recordsProcessed = 0;
 		}
 	}

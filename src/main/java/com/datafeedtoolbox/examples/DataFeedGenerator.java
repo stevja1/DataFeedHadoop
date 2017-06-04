@@ -11,13 +11,13 @@ import java.util.Random;
  */
 public class DataFeedGenerator {
 	// Defines how many hits can be in a visit.
-	private static final int MAX_VISIT_LENGTH = 150;
+	private static final int MAX_VISIT_LENGTH = 100;
 
 	// Defines how many visits a visitor can have.
-	private static final int MAX_VISITS = 17;
+	private static final int MAX_VISITS = 10;
 
 	// Defines conversion rate. Number between 0-100. Can be as low as 0.1 (Conversion rate of 0.1%)
-	private static final double CONVERSION_RATE = .5;
+	private static final double CONVERSION_RATE = 1;
 
 	// Don't change this -- its used to calculate whether a visitor converted or not
 	private static final double DENOMINATOR = (DataFeedGenerator.CONVERSION_RATE * 100);
@@ -67,6 +67,9 @@ public class DataFeedGenerator {
 		Random rand = new Random();
 		final long startTime = System.currentTimeMillis();
 		for(long i = 0; i < rowCount; ++i) {
+			if(i % 500000 == 0) {
+				System.out.println("Generated "+i+" hits out of "+rowCount+". "+((double)i/rowCount)*100+"% complete");
+			}
 			if(visitPageNum >= visitPageNumMax) {
 				visitPageNumMax = 0;
 			}
