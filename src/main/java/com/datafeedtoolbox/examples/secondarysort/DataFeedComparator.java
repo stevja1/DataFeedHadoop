@@ -24,23 +24,14 @@ public class DataFeedComparator extends WritableComparator {
 			DataFeedComparator.LOGGER.info("Made "+DataFeedComparator.comparisons+" comparisons in 5 seconds.");
 			DataFeedComparator.comparisons = 0;
 		}
-		// Should have three parts -- visid, visit_num, and visit_page_num
-		// Example: abc:123|2|13
-		final String[] key1Parts = a.toString().split("\\|", -1);
-		final String[] key2Parts = b.toString().split("\\|", -1);
-		final String visId1 = key1Parts[0];
-		final String visId2 = key2Parts[0];
 
-		final int result = visId1.compareTo(visId2);
+		CompositeDataFeedKey key1 = (CompositeDataFeedKey)a;
+		CompositeDataFeedKey key2 = (CompositeDataFeedKey)b;
+
+		final int result = key1.getVisId().compareTo(key2.getVisId());
 		if(result == 0) {
-			final Double hitRank1 = Double.valueOf(
-							String.format("%s.%s", key1Parts[1], key1Parts[2])
-			);
-			final Double hitRank2 = Double.valueOf(
-							String.format("%s.%s", key2Parts[1], key2Parts[2])
-			);
-			if(hitRank1 < hitRank2) return -1;
-			else if(hitRank1 > hitRank2) return 1;
+			if(key1.getHitOrder() < key2.getHitOrder()) return -1;
+			else if(key1.getHitOrder() > key2.getHitOrder()) return 1;
 			else return 0;
 		} else return result;
 	}

@@ -23,8 +23,8 @@ public class DataFeedGrouper extends WritableComparator {
 			DataFeedGrouper.LOGGER.info("Made "+DataFeedGrouper.comparisons+" comparisons in 5 seconds.");
 			DataFeedGrouper.comparisons = 0;
 		}
-		final String visId1 = a.toString().split("\\|", -1)[0];
-		final String visId2 = b.toString().split("\\|", -1)[0];
-		return visId1.compareTo(visId2);
+		CompositeDataFeedKey key1 = (CompositeDataFeedKey)a;
+		CompositeDataFeedKey key2 = (CompositeDataFeedKey)b;
+		return key1.getVisId().compareTo(key2.getVisId());
 	}
 }
