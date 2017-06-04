@@ -1,5 +1,6 @@
 package com.datafeedtoolbox.examples;
 
+import com.datafeedtoolbox.examples.tools.DataFeedTools;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.DoubleWritable;
@@ -7,75 +8,35 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Reducer;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.IOException;
 import java.net.URI;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 public class StandardReducer extends Reducer<Text,Text,Text,DoubleWritable> {
 	private final DoubleWritable result = new DoubleWritable();
 	private Configuration conf;
-	private final List<String> columnHeaders = new ArrayList<>();
+	private List<String> columnHeaders;
+	private Comparator<Text> comparator;
 
 	@Override
 	public void setup(Context context) throws IOException, InterruptedException {
-		conf = context.getConfiguration();
+		this.conf = context.getConfiguration();
 		URI[] columnHeadersFiles = Job.getInstance(conf).getCacheFiles();
 		if(columnHeadersFiles != null && columnHeadersFiles.length > 0) {
 			for (URI columnHeadersFile : columnHeadersFiles) {
 				Path patternsPath = new Path(columnHeadersFile.getPath());
-				String patternsFileName = patternsPath.getName().toString();
+				String patternsFileName = patternsPath.getName();
 				try {
-					readColumnHeaders(patternsFileName);
+					this.columnHeaders = DataFeedTools.readColumnHeaders(patternsFileName);
+					this.comparator = StandardReducer.getComparator(this.columnHeaders);
 				} catch(ParseException e) {
 					System.err.println("There was a problem parsing the column headers!");
 				}
 			}
 		}
-	}
-
-	/**
-	 * Reads in the column headers from a configuration file.
-	 * @param fileName The filename containing the column headers
-	 * @throws IOException Thrown if there is a problem reading from the file
-	 * @throws ParseException Thrown if there is a problem with the column header format.
-	 */
-	private void readColumnHeaders(final String fileName) throws IOException, ParseException {
-		final BufferedReader fis = new BufferedReader(new FileReader(fileName));
-		final String line = fis.readLine();
-		if(line != null && line.length() > 0 && line.contains("\t")) {
-			final String[] columnHeaders = line.split("\t", -1);
-			for(String columnHeader : columnHeaders) {
-				this.columnHeaders.add(columnHeader);
-			}
-		} else {
-			throw new ParseException("There was a problem reading the column headers!", 0);
-		}
-	}
-
-	private String getValue(String columnName, String[] columns) {
-		return columns[this.columnHeaders.lastIndexOf(columnName)];
-	}
-
-	private double calculateRevenue(String productList) {
-		final String PRODUCT_ITEM_DELIM = ",";
-		final String PRODUCT_PART_DELIM = ";";
-		double revenue = 0.0;
-		final String[] productItems = productList.split(PRODUCT_ITEM_DELIM, -1);
-		String[] productParts;
-		for(String productItem : productItems) {
-			productParts = productItem.split(PRODUCT_PART_DELIM, -1);
-			// Fields:
-			// 0: Product Category
-			// 1: Product SKU
-			// 2: Units
-			// 3: Total Revenue
-			revenue += Double.valueOf(productParts[3]);
-		}
-		return revenue;
 	}
 
 	@Override
@@ -84,17 +45,55 @@ public class StandardReducer extends Reducer<Text,Text,Text,DoubleWritable> {
 		String eventList;
 		String productList;
 		Double revenue = 0.0;
-		for(Text hit : values) {
-			columns = hit.toString().split("\t", -1);
-			eventList = this.getValue("post_event_list", columns);
+		List<Text> visitorTraffic = new ArrayList<>();
+
+		// Read data into an ArrayList that can be sorted
+		for(Text value : values) {
+			visitorTraffic.add(new Text(value));
+		}
+
+		visitorTraffic.sort(this.comparator);
+
+		for(Text hit : visitorTraffic) {
+			columns = hit.toString().split("\\t", -1);
+			eventList = DataFeedTools.getValue("post_event_list", columns, this.columnHeaders);
 			eventList = String.format(",%s,", eventList);
 			// Was there a purchase?
-			if(eventList.indexOf(",1,") >= 0) {
-				productList = this.getValue("post_product_list", columns);
-				revenue += this.calculateRevenue(productList);
+			if(eventList.contains(",1,")) {
+				productList = DataFeedTools.getValue("post_product_list", columns, this.columnHeaders);
+				revenue += DataFeedTools.calculateRevenue(productList);
 			}
 		}
 		this.result.set(revenue);
 		context.write(key, this.result);
+	}
+
+	public static Comparator<Text> getComparator(List<String> columnHeaders) {
+		return new Comparator<Text>() {
+			@Override
+			public int compare(Text o1, Text o2) {
+				// Parse the visit_num and visit_page_num columns out of both hits
+				String[] hit1Columns = o1.toString().split("\\t", -1);
+				int hit1VisitNum = Integer.valueOf(DataFeedTools.getValue("visit_num", hit1Columns, columnHeaders));
+				int hit1VisitPageNum = Integer.valueOf(DataFeedTools.getValue("visit_page_num", hit1Columns, columnHeaders));
+				String[] hit2Columns = o2.toString().split("\\t", -1);
+				int hit2VisitNum = Integer.valueOf(DataFeedTools.getValue("visit_num", hit2Columns, columnHeaders));
+				int hit2VisitPageNum = Integer.valueOf(DataFeedTools.getValue("visit_page_num", hit2Columns, columnHeaders));
+
+				// Place them inside of a number that can be easily compared
+				// In this case, we're using a double. Data will be formatted like this: 1.1, 1.2, 1.3
+				// where the number left of the decimal is the visit_num and the number right of the
+				// decimal is the visit_page_num.
+				double hit1Sequence = Double.valueOf(String.format("%d.%d", hit1VisitNum, hit1VisitPageNum));
+				double hit2Sequence = Double.valueOf(String.format("%d.%d", hit2VisitNum, hit2VisitPageNum));
+				// Now compare. Return -1 if o1 is before o2. Return 0 if they're equal (should never happen),
+				// return 1 if o1 is after o2.
+				if(hit1Sequence > hit2Sequence) {
+					return 1;
+				} else if(hit1Sequence < hit2Sequence) {
+					return -1;
+				} else return 0;
+			}
+		};
 	}
 }
